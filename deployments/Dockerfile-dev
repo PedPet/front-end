@@ -1,0 +1,8 @@
+FROM node
+
+ENV environment=development
+
+RUN mkdir /app/
+WORKDIR /app/
+
+CMD ["npm", "start"]
