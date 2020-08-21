@@ -3,6 +3,7 @@ import {
     RegisterSubmitSuccess,
     RegisterSubmitActionTypes,
     RegisterAction,
+    RegisterClear,
 } from "./types";
 import { Dispatch } from "redux";
 import { State, ConfirmResponse } from "../types";
@@ -18,9 +19,13 @@ const registerSubmitSuccess = (success: boolean): RegisterSubmitSuccess => ({
     success,
 });
 
+export const registerClear = (): RegisterClear => ({
+    type: "REGISTER_CLEAR",
+});
+
 export const register: RegisterAction = (
     state: State,
-    dispatch: Dispatch<RegisterSubmitActionTypes>
+    dispatch: Dispatch<RegisterSubmitActionTypes>,
 ) => async (username: string, password: string, email: string) => {
     if (registerIsSubmitting(state)) {
         return;
@@ -45,8 +50,9 @@ export const register: RegisterAction = (
         if (resp) {
             const text = await resp.text();
             dispatch(apiError(text));
-        } else {
-            dispatch(apiError("Sorry, something went wrong"));
+            return;
         }
+
+        dispatch(apiError());
     }
 };

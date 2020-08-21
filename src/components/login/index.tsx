@@ -1,5 +1,5 @@
-import React, { useState, useReducer } from "react";
-import { Props, ValidInputs } from "./types";
+import React, { useState, useEffect } from "react";
+import { Props, ValidInputs, SelectorState } from "./types";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -7,12 +7,51 @@ import TextField from "@material-ui/core/TextField";
 import DialogActions from "@material-ui/core/DialogActions";
 import ProgressButton from "../progress-button";
 import Button from "@material-ui/core/Button";
+import { useSelector, useDispatch } from "react-redux";
+import {
+    checkLoginSubmitting,
+    loggedInUser,
+    loginNeedToConfirm,
+} from "../../store/user/login/selector";
+import { loginAction } from "../../store/user/login/action";
+import { State } from "../../store/types";
+import ErrorNotification from "../notification/error";
 
-const Login: React.FC<Props> = ({ open, toggleDialog, toggleRegister }) => {
+const Login: React.FC<Props> = ({
+    open,
+    toggleDialog,
+    toggleRegister,
+    setUsername: setParentUsername,
+    closeLogin,
+}) => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const dispatch = useDispatch();
+    const { isSubmitting, user, login, needToConfirm } = useSelector<
+        State,
+        SelectorState
+    >((state) => ({
+        isSubmitting: checkLoginSubmitting(state),
+        user: loggedInUser(state),
+        login: loginAction(state, dispatch),
+        needToConfirm: loginNeedToConfirm(state),
+    }));
+
+    useEffect(
+        () => () => {
+            setUsername("");
+            setPassword("");
+        },
+        [],
+    );
+    useEffect(() => {
+        if (user) {
+            setTimeout(() => closeLogin && closeLogin(), 1000);
+        }
+    }, [user]);
 
     const openRegister = () => {
+        setParentUsername(username);
         toggleDialog();
         toggleRegister();
     };
@@ -28,8 +67,16 @@ const Login: React.FC<Props> = ({ open, toggleDialog, toggleRegister }) => {
         }
     };
 
+    const onSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+
+        setParentUsername(username);
+        login(username, password);
+    };
+
     return (
-        <Dialog open={open} onClose={toggleDialog}>
+        <Dialog open={open && !needToConfirm} onClose={closeLogin}>
+            <ErrorNotification />
             <DialogTitle>Login</DialogTitle>
             <DialogContent>
                 <form>
@@ -44,6 +91,7 @@ const Login: React.FC<Props> = ({ open, toggleDialog, toggleRegister }) => {
                     />
 
                     <TextField
+                        type="password"
                         label="password"
                         name="password"
                         required
@@ -61,7 +109,11 @@ const Login: React.FC<Props> = ({ open, toggleDialog, toggleRegister }) => {
                 >
                     Register
                 </Button>
-                <ProgressButton loading={false} success={false} onClick={}>
+                <ProgressButton
+                    loading={isSubmitting}
+                    success={user ? true : false}
+                    onClick={onSubmit}
+                >
                     Login
                 </ProgressButton>
             </DialogActions>

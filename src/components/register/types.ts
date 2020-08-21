@@ -1,4 +1,4 @@
-import { RegisterAction } from "../../store/register/types";
+import { RegisterAction, RegisterClear } from "../../store/register/types";
 import { CheckUsernameAction } from "../../store/user/check-username/types";
 
 export type Actions = {
@@ -25,9 +25,13 @@ export type StateSelector = {
     isFetching: boolean;
     usernameTaken: boolean | undefined;
     checkUsername: ReturnType<CheckUsernameAction>;
+    apiError: string;
+    clearRegister: () => RegisterClear;
 };
 
 export type Props = {
     open: boolean;
     toggleDialog: () => void;
+    toggleLogin: () => void;
+    username: string;
 };

@@ -14,67 +14,50 @@ import MoreIcon from "@material-ui/icons/More";
 import Button from "@material-ui/core/Button";
 import Login from "../login";
 import Register from "../register";
+import Confirm from "../confirm";
+import { useSelector, useDispatch } from "react-redux";
+import useStyles from "./styles";
+import { SelectorState } from "./types";
+import {
+    loginNeedToConfirm,
+    loggedInUser,
+} from "../../store/user/login/selector";
+import { State } from "../../store/types";
+import { cancelConfirm } from "../../store/user/login/action";
 
 const drawerWidth = 240;
-const useStyles = makeStyles(theme => ({
-    appBar: {
-        zIndex: theme.zIndex.drawer + 1,
-        transition: theme.transitions.create(["width", "margin"], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-        }),
-        justifyContent: "flex-end",
-    },
-    appBarShift: {
-        marginLeft: drawerWidth,
-        width: `calc(100% - ${drawerWidth}px)`,
-        transition: theme.transitions.create(["width", "margin"], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-        }),
-    },
-    menuButton: {
-        marginRight: 36,
-    },
-    hide: {
-        display: "none",
-    },
-    rightBar: {
-        float: "right",
-    },
-    sectionDesktop: {
-        display: "none",
-        [theme.breakpoints.up("sm")]: {
-            display: "flex",
-        },
-    },
-    sectionMobile: {
-        display: "flex",
-        [theme.breakpoints.up("sm")]: {
-            display: "none",
-        },
-    },
-    grow: {
-        flexGrow: 1,
-    },
-    loginBtn: {
-        color: "#fff",
-        whiteSpace: "nowrap",
-    },
-}));
 
 const Header: React.FC = () => {
-    const classes = useStyles();
+    const classes = useStyles({ drawerWidth });
     const [open, setOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const mobileMenuRef = useRef<HTMLButtonElement | null>();
     const [loginOpen, setLoginOpen] = useState(false);
     const [registerOpen, setRegisterOpen] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [username, setUsername] = useState("");
+    const { needToConfirm, user } = useSelector<State, SelectorState>(
+        (state) => ({
+            needToConfirm: loginNeedToConfirm(state),
+            user: loggedInUser(state),
+        }),
+    );
+    const dispatch = useDispatch();
 
-    const toggleDrawer = () => setOpen(!open);
-    const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-    const toggleLoginOpen = () => setLoginOpen(!loginOpen);
-    const toggleRegisterOpen = () => setRegisterOpen(!registerOpen);
+    const toggleDrawer = () => setOpen((open) => !open);
+    const toggleMobileMenu = () =>
+        setMobileMenuOpen((mobileMenuOpen) => !mobileMenuOpen);
+    const toggleLoginOpen = () => setLoginOpen((loginOpen) => !loginOpen);
+    const toggleRegisterOpen = () =>
+        setRegisterOpen((registerOpen) => !registerOpen);
+    const closeConfirm = () => {
+        setConfirmOpen(false);
+
+        if (needToConfirm) {
+            dispatch(cancelConfirm());
+        }
+    };
+    const closeLogin = () => setLoginOpen(false);
 
     const renderMobileMenu = () => (
         <Menu
@@ -100,12 +83,30 @@ const Header: React.FC = () => {
 
     return (
         <>
-            <Login
-                open={loginOpen}
-                toggleDialog={toggleLoginOpen}
-                toggleRegister={toggleRegisterOpen}
-            />
-            <Register open={registerOpen} toggleDialog={toggleRegisterOpen} />
+            {loginOpen && (
+                <Login
+                    open={loginOpen}
+                    toggleDialog={toggleLoginOpen}
+                    closeLogin={closeLogin}
+                    toggleRegister={toggleRegisterOpen}
+                    setUsername={setUsername}
+                />
+            )}
+            {registerOpen && (
+                <Register
+                    open={registerOpen}
+                    toggleDialog={toggleRegisterOpen}
+                    toggleLogin={toggleLoginOpen}
+                    username={username}
+                />
+            )}
+            {(confirmOpen || needToConfirm) && (
+                <Confirm
+                    open={confirmOpen || needToConfirm}
+                    toggleDialog={closeConfirm}
+                    username={username}
+                />
+            )}
 
             <AppBar
                 position="fixed"
@@ -144,15 +145,18 @@ const Header: React.FC = () => {
                         />
                     </div>
                     <div className={classes.grow} />
+
                     <div className={classes.sectionDesktop}>
-                        <Button
-                            variant="text"
-                            size="medium"
-                            className={classes.loginBtn}
-                            onClick={toggleLoginOpen}
-                        >
-                            Sign In
-                        </Button>
+                        {!user && (
+                            <Button
+                                variant="text"
+                                size="medium"
+                                className={classes.loginBtn}
+                                onClick={toggleLoginOpen}
+                            >
+                                Sign In
+                            </Button>
+                        )}
                         <AccountMenu />
                     </div>
                     <div className={classes.sectionMobile}>

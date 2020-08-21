@@ -15,7 +15,11 @@ export interface RegisterSubmitError extends Action {
     error: string;
 }
 
-export type RegisterSubmitActionTypes = RegisterSubmit | RegisterSubmitSuccess | APIErrorAction;
+export interface RegisterClear extends Action {
+    type: "REGISTER_CLEAR";
+}
+
+export type RegisterSubmitActionTypes = RegisterSubmit | RegisterSubmitSuccess | APIErrorAction | RegisterClear;
 
 export type RegisterAction = (state: State, dispatch: Dispatch<RegisterSubmitActionTypes>) => (
     username: string,

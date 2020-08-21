@@ -1,21 +1,28 @@
-import { CheckUsernameFetch, CheckUsernameFetchSuccess, CheckUsernameSubmitActionTypes, CheckUsernameAction } from "./types";
+import {
+    CheckUsernameFetch,
+    CheckUsernameFetchSuccess,
+    CheckUsernameSubmitActionTypes,
+    CheckUsernameAction,
+} from "./types";
 import { State, ConfirmResponse } from "../../types";
 import { Dispatch } from "redux";
 import { checkUsernameFetching as checkUsernameIsFetching } from "./selector";
 import { apiError } from "../../actions";
 
 const checkUsernameFetch = (): CheckUsernameFetch => ({
-    type: "CHECK_USERNAME_FETCH"
+    type: "CHECK_USERNAME_FETCH",
 });
 
-const checkUsernameFetchSuccess = (taken: boolean): CheckUsernameFetchSuccess => ({
+const checkUsernameFetchSuccess = (
+    taken: boolean,
+): CheckUsernameFetchSuccess => ({
     type: "CHECK_USERNAME_FETCH_SUCCESS",
-    taken
+    taken,
 });
 
 export const checkUsernameTaken: CheckUsernameAction = (
     state: State,
-    dispatch: Dispatch<CheckUsernameSubmitActionTypes>
+    dispatch: Dispatch<CheckUsernameSubmitActionTypes>,
 ) => async (username: string) => {
     if (checkUsernameIsFetching(state)) {
         return;
@@ -26,10 +33,13 @@ export const checkUsernameTaken: CheckUsernameAction = (
     let resp;
     try {
         const apiURL = process.env.REACT_APP_API_URL;
-        resp = await fetch(`${apiURL}/user/check-username-taken?username=${username}`, {
-            method: "GET",
-            mode: "cors",
-        });
+        resp = await fetch(
+            `${apiURL}/user/check-username-taken?username=${username}`,
+            {
+                method: "GET",
+                mode: "cors",
+            },
+        );
 
         const { ok }: ConfirmResponse = await resp.clone().json();
 
@@ -39,8 +49,9 @@ export const checkUsernameTaken: CheckUsernameAction = (
         if (resp) {
             const text = await resp.text();
             dispatch(apiError(text));
-        } else {
-            dispatch(apiError("Sorry, something went wrong"));
+            return;
         }
+
+        dispatch(apiError());
     }
 };

@@ -13,7 +13,7 @@ import {
     registerSuccess,
 } from "../../store/register/selectors";
 import { State as StoreState } from "../../store/types";
-import { register } from "../../store/register/actions";
+import { register, registerClear } from "../../store/register/actions";
 import ProgressButton from "../progress-button";
 import ErrorNotification from "../notification/error";
 import CheckCircleOutlinedIcon from "@material-ui/icons/CheckCircleOutlined";
@@ -25,6 +25,7 @@ import {
 } from "../../store/user/check-username/selector";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { makeStyles } from "@material-ui/core/styles";
+import { apiErrorSelector } from "../../store/selector";
 
 const useStyles = makeStyles({
     checkUsername: {
@@ -55,7 +56,12 @@ const initialState = {
 };
 const allowedInputs = ["username", "password", "email"];
 
-const Register: React.FC<Props> = ({ open, toggleDialog }) => {
+const Register: React.FC<Props> = ({
+    open,
+    toggleDialog,
+    toggleLogin,
+    username,
+}) => {
     const rDispatch = useDispatch();
     const {
         isSubmitting,
@@ -64,63 +70,86 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
         isFetching,
         usernameTaken,
         checkUsername,
-    } = useSelector<StoreState, StateSelector>(state => ({
+        apiError,
+        clearRegister,
+    } = useSelector<StoreState, StateSelector>((state) => ({
         isSubmitting: registerIsSubmitting(state),
         registered: registerSuccess(state),
         registerUser: register(state, rDispatch),
         isFetching: checkUsernameFetching(state),
         usernameTaken: checkUsernameIsTaken(state),
         checkUsername: checkUsernameTaken(state, rDispatch),
+        apiError: apiErrorSelector(state),
+        clearRegister: registerClear,
     }));
     const classes = useStyles();
 
     const [usernameEditing, setUsernameEditing] = useState<
         boolean | undefined
     >();
-    const [state, dispatch] = useReducer((state: State, action: Actions) => {
-        const { type, key, value } = action;
+    const [state, dispatch] = useReducer(
+        (state: State, action: Actions) => {
+            const { type, key, value } = action;
 
-        switch (type) {
-            case "UPDATE":
-                if (key && value) {
-                    return {
-                        ...state,
-                        [key]: {
-                            error: state[key].error,
-                            value,
-                        },
-                    };
-                }
+            switch (type) {
+                case "UPDATE":
+                    if (key) {
+                        return {
+                            ...state,
+                            [key]: {
+                                error: state[key].error,
+                                value,
+                            },
+                        };
+                    }
 
-                return state;
+                    return state;
 
-            case "ERROR":
-                if (key && value) {
-                    return {
-                        ...state,
-                        [key]: {
-                            value: state[key].value,
-                            error: value,
-                        },
-                    };
-                }
+                case "ERROR":
+                    if (key && value) {
+                        return {
+                            ...state,
+                            [key]: {
+                                value: state[key].value,
+                                error: value,
+                            },
+                        };
+                    }
 
-                return state;
+                    return state;
 
-            case "RESET":
-                return initialState;
+                case "RESET":
+                    return initialState;
 
-            default:
-                return state;
-        }
-    }, initialState);
+                default:
+                    return state;
+            }
+        },
+        {
+            ...initialState,
+            username: {
+                ...initialState.username,
+                value: username,
+            },
+        },
+    );
 
     // On close register
     useEffect(() => {
         dispatch({
-            type: "RESET",
+            type: "UPDATE",
+            key: "username",
+            value: username,
         });
-    }, [open]);
+    }, [username]);
+    useEffect(
+        () => () => {
+            dispatch({
+                type: "RESET",
+            });
+        },
+        [],
+    );
 
     useEffect(() => {
         if (usernameTaken) {
@@ -150,7 +179,7 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
 
                 return formValid;
             },
-            true
+            true,
         );
 
         if (!formValid) {
@@ -181,6 +210,7 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
                 value: err,
             });
         }
+
         dispatch({
             type: "UPDATE",
             key: name as keyof State,
@@ -229,7 +259,7 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
                 // Regex from https://emailregex.com
                 if (
                     !val.match(
-                        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
                     )
                 ) {
                     return [false, "Email must be a valid email address"];
@@ -279,10 +309,23 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
         return [false, "Invalid input"];
     };
 
+    const loginClick = () => {
+        toggleDialog();
+        toggleLogin();
+        clearRegister();
+    };
+
+    // const onClose = () => {
+    //     dispatch({
+    //         type: "RESET",
+    //     });
+    //     toggleDialog();
+    // };
+
     return (
         <Dialog open={open} onClose={toggleDialog}>
             <ErrorNotification />
-            <DialogTitle>{!register ? "Register" : "Registered"}</DialogTitle>
+            <DialogTitle>{!registered ? "Register" : "Registered"}</DialogTitle>
             <DialogContent style={{ overflow: "hidden" }}>
                 {!registered ? (
                     <>
@@ -314,10 +357,12 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
                                     color="secondary"
                                 />
                             ) : (
-                                <CheckCircleOutlinedIcon
-                                    className={classes.checkUsername}
-                                    color="primary"
-                                />
+                                !apiError && (
+                                    <CheckCircleOutlinedIcon
+                                        className={classes.checkUsername}
+                                        color="primary"
+                                    />
+                                )
                             ))
                         )}
 
@@ -385,7 +430,7 @@ const Register: React.FC<Props> = ({ open, toggleDialog }) => {
                         <Button
                             variant="contained"
                             color="primary"
-                            onClick={toggleDialog}
+                            onClick={loginClick}
                         >
                             Login
                         </Button>

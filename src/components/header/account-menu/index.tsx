@@ -4,19 +4,29 @@ import AccountCircle from "@material-ui/icons/AccountCircle";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Register from "../../register";
-import { Props } from "./types";
+import { Props, SelectorState } from "./types";
+import Login from "../../login";
+import { useSelector } from "react-redux";
+import { loggedInUser } from "../../../store/user/login/selector";
+import { State } from "../../../store/types";
 
 const AccountMenu = forwardRef<Element, Props>(({ mobile = false }, ref) => {
     const [open, setOpen] = useState(false);
     const [openRegister, setOpenRegister] = useState(false);
+    const [openLogin, setOpenLogin] = useState(false);
+    const [username, setUsername] = useState("");
     const buttonRef = useRef<HTMLButtonElement>();
+    const { user } = useSelector<State, SelectorState>((state) => ({
+        user: loggedInUser(state),
+    }));
 
     const toggleMenu = () => setOpen(!open);
     const toggleRegister = () => setOpenRegister(!openRegister);
+    const toggleLogin = () => setOpenLogin(!openLogin);
 
     const menuItems = (
         anchorEl: Element | undefined,
-        marginTop: number = 0
+        marginTop: number = 0,
     ) => (
         <>
             <Menu
@@ -34,11 +44,35 @@ const AccountMenu = forwardRef<Element, Props>(({ mobile = false }, ref) => {
                 onClose={toggleMenu}
                 style={{ marginTop }}
             >
-                <MenuItem onClick={toggleRegister}>Register</MenuItem>
-                <MenuItem>Login</MenuItem>
+                <>
+                    {!user ? (
+                        <>
+                            <MenuItem onClick={toggleRegister}>
+                                Register
+                            </MenuItem>
+                            <MenuItem onClick={toggleLogin}>Login</MenuItem>
+                        </>
+                    ) : (
+                        <MenuItem>Log out</MenuItem>
+                    )}
+                </>
             </Menu>
-
-            <Register open={openRegister} toggleDialog={toggleRegister} />
+            {user && (
+                <>
+                    <Register
+                        open={openRegister}
+                        toggleDialog={toggleRegister}
+                        toggleLogin={toggleLogin}
+                        username={username}
+                    />
+                    <Login
+                        open={openLogin}
+                        toggleDialog={toggleLogin}
+                        toggleRegister={toggleRegister}
+                        setUsername={setUsername}
+                    />
+                </>
+            )}
         </>
     );
 

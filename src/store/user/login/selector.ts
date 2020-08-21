@@ -6,3 +6,6 @@ export const checkLoginSubmitting = (state: State): boolean =>
 
 export const loggedInUser = (state: State): User | undefined =>
     state.user.login.user;
+
+export const loginNeedToConfirm = (state: State): boolean =>
+    state.user.login.needToConfirm;

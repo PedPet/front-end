@@ -1,20 +1,23 @@
 import { Reducer } from "redux";
-import { RegisterState, RegisterSubmitActionTypes } from "./types";
+import { ConfirmUserState, ConfirmUserActions } from "./types";
 
-const initialState: RegisterState = {
+const initialState: ConfirmUserState = {
     submitting: false,
     success: false,
 };
 
-const reducer: Reducer<RegisterState, RegisterSubmitActionTypes> = (state = initialState, action) => {
+const reducer: Reducer<ConfirmUserState, ConfirmUserActions> = (
+    state = initialState,
+    action,
+) => {
     switch (action.type) {
-        case "REGISTER_SUBMIT":
+        case "CONFIRM_USER_SUBMITTING":
             return {
                 submitting: true,
                 success: false,
             };
 
-        case "REGISTER_SUBMIT_SUCCESS":
+        case "CONFIRM_USER_SUBMIT_SUCCESS":
             return {
                 submitting: false,
                 success: action.success,
@@ -22,12 +25,9 @@ const reducer: Reducer<RegisterState, RegisterSubmitActionTypes> = (state = init
 
         case "API_ERROR":
             return {
+                ...state,
                 submitting: false,
-                success: false
             };
-
-        case "REGISTER_CLEAR":
-            return initialState;
 
         default:
             return state;

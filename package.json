@@ -41,6 +41,11 @@
       "last 1 safari version"
     ]
   },
+  "prettier": {
+    "tabWidth": 4,
+    "trailingComma": "all",
+    "singleQuote": false
+  },
   "devDependencies": {
     "@types/react": "^16.9.38",
     "@types/react-dom": "^16.9.8",
