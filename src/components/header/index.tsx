@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import clsx from "clsx";
-import { makeStyles } from "@material-ui/core/styles";
 import logo from "../../resources/logo.png";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -25,7 +24,7 @@ import {
 import { State } from "../../store/types";
 import { cancelConfirm } from "../../store/user/login/action";
 
-const drawerWidth = 240;
+const drawerWidth = 180;
 
 const Header: React.FC = () => {
     const classes = useStyles({ drawerWidth });

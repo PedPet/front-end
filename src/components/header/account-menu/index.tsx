@@ -44,18 +44,18 @@ const AccountMenu = forwardRef<Element, Props>(({ mobile = false }, ref) => {
                 onClose={toggleMenu}
                 style={{ marginTop }}
             >
-                <>
+                <span>
                     {!user ? (
-                        <>
+                        <span>
                             <MenuItem onClick={toggleRegister}>
                                 Register
                             </MenuItem>
                             <MenuItem onClick={toggleLogin}>Login</MenuItem>
-                        </>
+                        </span>
                     ) : (
                         <MenuItem>Log out</MenuItem>
                     )}
-                </>
+                </span>
             </Menu>
             {user && (
                 <>

@@ -1,6 +1,9 @@
 FROM node
 
 ENV environment=development
+ENV CHOKIDAR_USEPOLLING=true
+
+RUN apt update && apt install -y inotify-tools
 
 RUN mkdir /app/
 WORKDIR /app/
